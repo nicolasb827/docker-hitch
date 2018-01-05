@@ -1,26 +1,32 @@
-FROM alpine:3.3
+FROM alpine
 
-MAINTAINER Wido den Hollander <wido@widodh.nl>
+MAINTAINER Nicolas Belan <bsd_2000@yahoo.fr>
 
-ARG HITCH_VERSION=1.2.0
-ARG HITCH_CHECKSUM=54e7a3c9eb924bb7beb18da9216921e194c51955
+ARG HITCH_VERSION=1.4.6
+ARG HITCH_CHECKSUM=4dbf533706129bfd7a45f6dff020e2ba281a4abc
+ARG HITCH_WEBPATH=https://hitch-tls.org/source
 
 ENV HITCH_USER nobody
 ENV HITCH_GROUP nogroup
 ENV HITCH_CONFIG /etc/hitch/hitch.conf
-ENV HITCH_WORKERS 1
+ENV HITCH_WORKERS 2
+ENV HITCH_PARAMS ""
+ENV HITCH_BACKEND "web"
+ENV HITCH_BACKEND_PORT 80
 
 RUN apk add --no-cache openssl libev
 
-RUN apk add --no-cache --virtual .build-deps curl libev-dev openssl-dev autoconf libtool py-docutils make automake pkgconfig gcc musl-dev byacc flex \
-    && mkdir /usr/src \
+RUN apk add --no-cache --virtual .build-deps curl libev-dev openssl-dev autoconf libtool py-docutils make automake pkgconfig gcc musl-dev byacc flex
+
+RUN mkdir /usr/src \
     && cd /usr/src \
-    && curl -SL -o hitch.tar.gz https://github.com/varnish/hitch/archive/hitch-${HITCH_VERSION}.tar.gz \
-    && echo "${HITCH_CHECKSUM}  hitch.tar.gz" > sha1sums.txt \
-    && sha1sum -c sha1sums.txt \
-    && tar xzf hitch.tar.gz \
-    && cd hitch-hitch-${HITCH_VERSION} \
-    && ./bootstrap \
+    && curl -SL -o hitch.tar.gz ${HITCH_WEBPATH}/hitch-${HITCH_VERSION}.tar.gz
+
+RUN cd /usr/src && echo "${HITCH_CHECKSUM}  hitch.tar.gz" > sha1sums.txt \
+    && sha1sum hitch.tar.gz && sha1sum -c sha1sums.txt
+
+RUN cd /usr/src && tar xzf hitch.tar.gz \
+    && cd hitch-${HITCH_VERSION} \
     && ./configure --bindir=/usr/bin --sbindir=/usr/sbin --libexecdir=/usr/libexec --sysconfdir=/etc --localstatedir=/var --libdir=/usr/lib \
     && make \
     && make install \
